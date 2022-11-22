@@ -1,0 +1,30 @@
+---
+- name: include variables
+  ansible.builtin.import_role:
+    name: lihas_variables
+  when: configspaces is not defined
+  tags:
+    - always
+    - variables
+- name: collect host entries
+  ansible.builtin.set_fact:
+    hostentries: "{{ hostentries | default({}) | combine( hostvars[inventory_hostname]['hostentries'] | default({}) ) }}"
+- name: collect host entries, configgroups
+  ansible.builtin.set_fact:
+    hostentries: "{{ hostentries | default({}) | combine( hostvars[inventory_hostname][item]['config']['hostentries'] | default({}) ) }}"
+  with_list: "{{ configspaces }}"
+  when: hostvars[inventory_hostname][item]['config']['hostentries'] is defined
+- name: debug hostentries
+  ansible.builtin.debug:
+    var: hostentries
+- name: make block
+  ansible.builtin.set_fact:
+    hostentriesblock: "{{ hostentriesblock | default ('') + item.key + ' ' + item.value + '\n' }}"
+  with_dict: "{{ hostentries }}"
+- name: update /etc/hosts
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    marker_begin: "BEGIN lihas_hosts"
+    marker_end: "END lihas_hosts"
+    block: "{{ hostentriesblock }}"
+...
