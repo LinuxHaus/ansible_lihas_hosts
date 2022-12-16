@@ -19,7 +19,7 @@
     var: hostentries
 - name: make block
   ansible.builtin.set_fact:
-    hostentriesblock: "{{ hostentriesblock | default ('') + item.key + ' ' + item.value + '\n' }}"
+    hostentriesblock: "{{ hostentriesblock | default ('') + item.value + ' ' + item.key + '\n' }}"
   with_dict: "{{ hostentries }}"
 - name: update /etc/hosts
   ansible.builtin.blockinfile:
